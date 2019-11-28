@@ -1,0 +1,17 @@
+__pycache__/
+trash/
+.vscode/
+.queue/
+.git/
+
+*.pyc
+*.jpg
+*.mp4
+*.h5
+*.pb
+*.pbtxt
+*.weights
+*.avi
+*.mkv
+*.zip
+*.ipc

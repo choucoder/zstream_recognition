@@ -1,0 +1,24 @@
+<html>
+    <head>
+        <title>Video View</title>
+    </head>
+    <body>
+
+        <div id="video-container">
+            <img id="video-view" width="640" height="480"/>
+        </div>
+       
+        <script src='streaming-service.js'></script>
+        <script>
+            var wsUrl = 'ws://0.0.0.0:5554'
+            var wsName = "ws-zzio"
+
+            if (window.WebSocket == undefined) {
+                console.log('Sockets are not supported.')
+            } else {
+                console.log("WebSocket is suppored in this browser")
+                window.addEventListener("load", createStreamingWebSocket(wsUrl, wsName), false)
+            }
+        </script>
+    </body>
+</html>

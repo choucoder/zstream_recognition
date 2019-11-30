@@ -1,10 +1,10 @@
-function createStreamingWebSocket( address, name ) {
+function createStreamingWebSocket( address, name, address ) {
     ws = new WebSocket(address)
     wsName = name
 
     ws.onopen = function( e ) {
         console.log("Opened.")
-        request = {'topic': 'Client-video.mp4', 'signal': 0}
+        request = {'topic': address, 'signal': 0}
         request = JSON.stringify(request)
         ws.send(request)
     }

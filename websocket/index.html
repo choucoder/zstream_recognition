@@ -1,14 +1,27 @@
 <html>
     <head>
         <title>Video View</title>
+        <link rel="stylesheet" href="static/bootstrap.min.css" />
     </head>
     <body>
 
-        <div id="video-container">
-            <img id="video-view" width="640" height="480"/>
+        <div id="video-container" class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <img id="video-view" height="640"/>
+                </div>
+                <div class="col-md-4 form-group">
+                    <div class="input-group">
+                        <input type='text' id="video-name" class="form-control" placeholder="Address camera">
+                        <button type="submit" id="subscribe" class="btn btn-primary">Subscribir</button>
+                    </div>
+                </div>
+            </div>
         </div>
        
         <script src='streaming-service.js'></script>
+        <script src='static/jquery.min.js'></script>
+        <script src='static/bootstrap.min.js'></script>
         <script>
             var wsUrl = 'ws://0.0.0.0:5554'
             var wsName = "ws-zzio"
@@ -19,6 +32,11 @@
                 console.log("WebSocket is suppored in this browser")
                 window.addEventListener("load", createStreamingWebSocket(wsUrl, wsName), false)
             }
+
+            $("#subscribe").on("click", function(e){
+                address = $("#video-name").val()
+                createStreamingWebSocket(wsUrl, wsName, address)
+            })
         </script>
     </body>
 </html>

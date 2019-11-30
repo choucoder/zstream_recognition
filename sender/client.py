@@ -1,5 +1,6 @@
 import zmq
 import time
+from imutils import resize
 from cv2 import VideoCapture
 from threading import Thread
 
@@ -42,13 +43,13 @@ class StreamClient(Thread):
                 ret, frame = streamer.read()
                 if not ret:
                     break
+                frame = resize(frame, width=720, height=640)
                 client.send_pyobj(frame)
                 reply = client.recv()
-                print(reply)
                 frames += 1
                 diffTime = time.time() - startTime
                 fps = round(frames / diffTime, 2)
-                print(fps)
+                #print(fps)
             except zmq.ZMQError as e:
                 if e.strerror == "Context was terminated":
                     break

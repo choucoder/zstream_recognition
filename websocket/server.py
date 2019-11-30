@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 from uuid import uuid4
 from json import loads, dumps

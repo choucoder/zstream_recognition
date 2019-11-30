@@ -1,4 +1,4 @@
-# A script to send streaming from ip camera over tcp
+#!/usr/bin/env python3
 import sys
 import zmq
 import time
@@ -30,15 +30,17 @@ class StreamHandler(object):
         print("[INFO] Starting StreamHandler...")
         while not self.terminated:
             time.sleep(2.5)
-            cameras = ['rtsp://localhost-video.mp4']
+            cameras = ['rtsp://localhost-video.mp4', 'rtsp://localhost-video2.mp4']
             for camera in cameras:
-                if not self.is_streaming(camera) and online(camera):
-                    camera_url = url_format(camera)
+                camera_url = url_format(camera)
+                if not self.is_streaming(camera_url) and online(camera):
                     self.stream_clients[camera_url] = StreamClient(self, self.broker_url, camera_url)
                     self.stream_clients[camera_url].start()
-                    print("[INFO] StreamClient[{}] has been started.".format(camera))
+                    print("[INFO] StreamClient[{}] has been started.".format(camera_url))
+                elif self.is_streaming(camera_url):
+                    print("[INFO] Camera {} is already streaming".format(url_format(camera)))
                 else:
-                    print("[INFO] Camera {} sucks".format(url_format(camera)))
+                    print("[INFO] Camera {} is not online for streaming".format(url_format(camera)))
 
     def terminate(self):
         self._terminated = True

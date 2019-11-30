@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import zmq
 
@@ -36,7 +37,6 @@ class StreamingBroker(object):
 def main():
     url_backend = 'tcp://*:5553' 
     url_frontend = 'tcp://*:5552'
-
     try:
         StreamingBroker(url_frontend, url_backend).start_streaming_broker()
     except (KeyboardInterrupt, SystemExit):

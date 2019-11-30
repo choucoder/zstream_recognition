@@ -1,13 +1,15 @@
+#!/usr/bin/env python3
 import zmq
 from uuid import uuid4
 
 class DeepLearningWorker(object):
 
-    def __init__(self, worker_url, stream_url, **kwargs):
+    def __init__(self, worker_url, stream_url, status_url, **kwargs):
         if kwargs:
             raise TypeError("Unrecognized keyword argument: {}".format(kwargs))
         self.worker_url = worker_url
         self.stream_url = stream_url
+        self.status_url = status_url
         self._terminated = False
     
     @property
@@ -17,12 +19,17 @@ class DeepLearningWorker(object):
     def start_worker(self):
         ctx = zmq.Context()
         worker = ctx.socket(zmq.REQ)
-        identity = str(uuid4()).replace('-', '')[: 8]
-        worker.setsockopt_string(zmq.IDENTITY, identity)
+        self.identity = str(uuid4()).replace('-', '')[: 8]
+        worker.setsockopt_string(zmq.IDENTITY, self.identity)
         worker.connect(self.worker_url)
 
         streamfe = ctx.socket(zmq.PUB)
         streamfe.connect(self.stream_url)
+
+        self.statebe = ctx.socket(zmq.PUSH)
+        self.statebe.connect(self.status_url)
+
+        print("[INFO] Worker {} is running...".format(self.identity))
 
         worker.send(b"0x1")
 
@@ -38,21 +45,26 @@ class DeepLearningWorker(object):
                     break
                 else:
                     raise e
-
+        
         worker.close()
         ctx.term()
-        self._terminated = True
+        self.terminate()
         
     def terminate(self):
-        self._terminated = True
+        if not self.terminated:
+            self._terminated = True
+            self.statebe.send_multipart([self.identity.encode('utf-8'), b"0x2"])
 
 def main():
     try:
         worker = DeepLearningWorker(
             worker_url='tcp://localhost:5551', 
-            stream_url='tcp://localhost:5552')
+            stream_url='tcp://localhost:5552',
+            status_url='tcp://localhost:5555')
         worker.start_worker()
     except (KeyboardInterrupt, SystemExit):
+        pass
+    finally:
         worker.terminate()
 
 if __name__ == '__main__':

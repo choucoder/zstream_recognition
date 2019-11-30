@@ -1,0 +1,83 @@
+{
+    "child": {
+        "child1": {
+            "child1": {
+                "directory": "",
+                "height": 208,
+                "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                "readOnly": false,
+                "synchronizedInput": true,
+                "type": "Terminal",
+                "uuid": "91c54307-1e4f-44e2-92d3-65332f3b17bc",
+                "width": 568
+            },
+            "child2": {
+                "directory": "",
+                "height": 208,
+                "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                "readOnly": false,
+                "synchronizedInput": true,
+                "type": "Terminal",
+                "uuid": "ce546918-137b-41c6-b2b3-36528dafe165",
+                "width": 568
+            },
+            "orientation": 0,
+            "position": 49,
+            "ratio": 0.499560246262093222,
+            "type": "Paned"
+        },
+        "child2": {
+            "child1": {
+                "directory": "",
+                "height": 233,
+                "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                "readOnly": false,
+                "synchronizedInput": true,
+                "type": "Terminal",
+                "uuid": "41c6214d-1335-4940-8449-6fe41bab5ed8",
+                "width": 568
+            },
+            "child2": {
+                "child1": {
+                    "directory": "",
+                    "height": 116,
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": true,
+                    "type": "Terminal",
+                    "uuid": "87411b23-f09b-4445-9035-430ce8d3b13a",
+                    "width": 568
+                },
+                "child2": {
+                    "directory": "",
+                    "height": 116,
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": true,
+                    "type": "Terminal",
+                    "uuid": "3451af75-c493-478e-87b4-5419a24d6a62",
+                    "width": 568
+                },
+                "orientation": 1,
+                "position": 26,
+                "ratio": 0.497854077253218896,
+                "type": "Paned"
+            },
+            "orientation": 0,
+            "position": 49,
+            "ratio": 0.499560246262093222,
+            "type": "Paned"
+        },
+        "orientation": 1,
+        "position": 47,
+        "ratio": 0.470588235294117641,
+        "type": "Paned"
+    },
+    "height": 442,
+    "name": "Default",
+    "synchronizedInput": false,
+    "type": "Session",
+    "uuid": "c38aba05-2180-490d-86a1-249f7b822d92",
+    "version": "1.0",
+    "width": 1137
+}

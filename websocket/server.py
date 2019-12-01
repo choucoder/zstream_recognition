@@ -63,12 +63,13 @@ class WebSocketServer(WebSocketServerProtocol):
     def terminate(self):
         self._terminated = True
         keys = list(self.subscriptors.keys())
+        print("keys: {}".format(keys))
         for key in keys:
             try:
                 self.subscriptors[key].terminate()
-                del self.subscriptors[key]
             except:
                 pass
+        print("Se termino")
 
     def onMessage(self, payload, isBinary):
         raw = payload.decode('utf-8')
@@ -87,6 +88,7 @@ class WebSocketServer(WebSocketServerProtocol):
         print(msg)
 
     def onClose(self, wasClean, code, reason):
+        print("[INFO] {} {} {}".format(wasClean, code, reason))
         self.terminate()
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@
         <div id="video-container" class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <img id="video-view" height="640"/>
+                    <img id="video-view" width="640" height="480"/>
                 </div>
                 <div class="col-md-4 form-group">
                     <div class="input-group">
@@ -30,7 +30,7 @@
                 console.log('Sockets are not supported.')
             } else {
                 console.log("WebSocket is suppored in this browser")
-                window.addEventListener("load", createStreamingWebSocket(wsUrl, wsName), false)
+                //window.addEventListener("load", createStreamingWebSocket(wsUrl, wsName), false)
             }
 
             $("#subscribe").on("click", function(e){

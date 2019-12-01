@@ -1,10 +1,10 @@
-function createStreamingWebSocket( address, name, address ) {
+function createStreamingWebSocket( address, name, topic ) {
     ws = new WebSocket(address)
     wsName = name
 
     ws.onopen = function( e ) {
         console.log("Opened.")
-        request = {'topic': address, 'signal': 0}
+        request = {'topic': topic, 'signal': 0}
         request = JSON.stringify(request)
         ws.send(request)
     }

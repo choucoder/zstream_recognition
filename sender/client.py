@@ -43,7 +43,7 @@ class StreamClient(Thread):
                 ret, frame = streamer.read()
                 if not ret:
                     break
-                frame = resize(frame, width=720, height=640)
+                frame = resize(frame, width=640, height=480)
                 client.send_pyobj(frame)
                 reply = client.recv()
                 frames += 1

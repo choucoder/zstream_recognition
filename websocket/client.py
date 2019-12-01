@@ -4,7 +4,8 @@ import base64
 import imutils
 from json import dumps
 from threading import Thread
-from cv2 import imencode, IMWRITE_JPEG_QUALITY
+from utils.draw import drawFaces
+from cv2 import imencode, IMWRITE_JPEG_QUALITY, putText, FONT_HERSHEY_DUPLEX
 
 class WebSocketClient(Thread):
 
@@ -29,8 +30,8 @@ class WebSocketClient(Thread):
         return self._terminated
 
     def terminate(self):
-        self.streambe.close()
-        self.ctx.term()
+        #self.streambe.close()
+        #self.ctx.term()
         self._terminated = True
 
         try:
@@ -46,7 +47,7 @@ class WebSocketClient(Thread):
             try:
                 client_address = self.streambe.recv()
                 frame = self.streambe.recv_pyobj()
-                reply = self.streambe.recv()
+                reply = self.streambe.recv_json()
                 
                 frames += 1
                 elapsedTime = time.time() - startTime
@@ -54,6 +55,11 @@ class WebSocketClient(Thread):
 
                 try:
                     frame = imutils.resize(frame, width=640, height=480)
+                    ids = reply['ids']
+                    names = reply['names']
+                    frame = drawFaces(frame, reply['boxes'], ids, names)
+                    putText(frame, 'fps: ' + str(fps), (int(10), int(20)),
+                        FONT_HERSHEY_DUPLEX, 0.50, (205, 155, 55), 1)
                     _, image = imencode('.jpg', frame)
                     data = base64.b64encode(image).decode('utf-8')
                     response = dumps({
@@ -66,12 +72,16 @@ class WebSocketClient(Thread):
 
                     self.parent.sendMessage(response)
                 except Exception as e:
-                    print(e)
+                    print("Exception en : {}".format(e))
                     break
             except zmq.ZMQError as e:
                 if e.strerror == "Context was terminated":
                     break
                 else:
                     raise e
-        
-        self.terminate()
+
+            except Exception as e:
+                print("e: {}".format(e))
+
+        if not self._terminated:
+            self.terminate()

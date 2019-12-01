@@ -2,6 +2,7 @@
 import zmq
 import pickle
 from uuid import uuid4
+from imutils import resize
 from face_recognition import face_encodings
 from lib.detectors.detector import MtcnnDetector, DlibDetector
 from lib.recognition.recognition import HandlerSearch
@@ -43,19 +44,21 @@ class DeepLearningWorker(object):
 
         while not self.terminated:
             try:
-                client_address, _, frame = worker.recv_multipart()
+                client_address, _, data = worker.recv_multipart()
                 reply = b"READY"
                 # Facial recognition work
-                image = pickle.loads(frame)
-                # bboxes = self.detector.getBoxes(image, confidence=0.8)
-                bboxes = self.detector.getBoxes(image)
-                encodings = face_encodings(image, bboxes)
+                frame = pickle.loads(data)
+                frame = resize(frame, width=640, height=480)
+
+                bboxes = self.detector.getBoxes(frame, confidence=0.8)
+                encodings = face_encodings(frame, bboxes)
                 ids, names = self.handlerSearch.search(encodings, matches=200, confidence=0.025)
+
                 worker.send_multipart([client_address, b"", reply])
                 # Send frame and json response to streaming server
                 reply = {'boxes': bboxes, 'ids': ids, 'names': names}
                 streamfe.send(client_address, zmq.SNDMORE)
-                streamfe.send(frame, zmq.SNDMORE)
+                streamfe.send(pickle.dumps(frame), zmq.SNDMORE)
                 streamfe.send_json(reply)
                 #streamfe.send_multipart([client_address, frame, bytes(reply, 'utf-8').decode('utf-8')])
             except zmq.ZMQError as e:

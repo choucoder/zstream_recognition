@@ -3,6 +3,7 @@ import time
 from imutils import resize
 from cv2 import VideoCapture
 from threading import Thread
+from imutils.video import VideoStream
 
 class StreamClient(Thread):
     def __init__(self, parent, broker_url, camera_url, **kwargs):
@@ -25,6 +26,17 @@ class StreamClient(Thread):
         except:
             pass
 
+    def read_frame(self):
+        if 'rtsp://' in self.camera_url:
+            frame = self.streamer.read()
+            try:
+                if not frame:
+                    return False, frame
+            except:
+                return True, frame
+        else:
+            return self.streamer.read()
+
     def run(self):
         # Network configurations
         context = zmq.Context(io_threads=1)
@@ -33,17 +45,19 @@ class StreamClient(Thread):
         client.setsockopt_string(zmq.IDENTITY, identity)
         client.connect(self.broker_url)
         # VideoStreaming configuration
-        streamer = VideoCapture(self.camera_url)
+        if 'rtsp://' in self.camera_url:
+            self.streamer = VideoStream(src=self.camera_url).start()
+        else:
+            self.streamer = VideoCapture(self.camera_url)
 
         frames = 0
         startTime = time.time()
 
         while not self.terminated and not self.parent.terminated:
             try:
-                ret, frame = streamer.read()
+                ret, frame = self.read_frame()
                 if not ret:
                     break
-                frame = resize(frame, width=640, height=480)
                 client.send_pyobj(frame)
                 reply = client.recv()
                 frames += 1

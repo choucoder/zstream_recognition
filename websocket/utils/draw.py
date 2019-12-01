@@ -14,15 +14,15 @@ def drawYoloObjects(frame, results):
 	return frame_copy
 
 def drawFaces(frame, results, ids, names):
-	frame_copy = frame.copy()
+	# frame_copy = frame.copy()
 	color = [255, 0, 0]
 	
 	for i, box in enumerate(results):
 		# left, top, right, bottom = box
 		top, right, bottom, left = box
-		cv2.rectangle(frame_copy, (left, top), (right, bottom), color, 2)
-		cv2.putText(frame_copy, names[i], (left, top - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0, 0), 1, cv2.LINE_AA)
-	return frame_copy
+		cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
+		cv2.putText(frame, names[i], (left, top - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0, 0), 1, cv2.LINE_AA)
+	return frame
 
 def drawCorners(frame, boxes):
 

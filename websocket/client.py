@@ -58,7 +58,7 @@ class WebSocketClient(Thread):
                     ids = reply['ids']
                     names = reply['names']
                     frame = drawFaces(frame, reply['boxes'], ids, names)
-                    putText(frame, 'fps: ' + str(fps), (int(10), int(20)),
+                    putText(frame, 'fps: ' + str(reply['fps']), (int(10), int(20)),
                         FONT_HERSHEY_DUPLEX, 0.50, (205, 155, 55), 1)
                     _, image = imencode('.jpg', frame)
                     data = base64.b64encode(image).decode('utf-8')

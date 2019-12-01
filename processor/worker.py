@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import time
 import zmq
 import pickle
 from uuid import uuid4
@@ -42,6 +43,9 @@ class DeepLearningWorker(object):
 
         worker.send(b"0x1")
 
+        frames = 0
+        startTime = time.time()
+
         while not self.terminated:
             try:
                 client_address, _, data = worker.recv_multipart()
@@ -54,10 +58,13 @@ class DeepLearningWorker(object):
                 # bboxes = self.detector.getBoxes(frame, confidence=0.8)
                 encodings = face_encodings(frame, bboxes)
                 ids, names = self.handlerSearch.search(encodings, matches=200, confidence=0.025)
+                frames += 1
+                diffTime = time.time() - startTime
+                fps = round(frames / diffTime, 2)
 
                 worker.send_multipart([client_address, b"", reply])
                 # Send frame and json response to streaming server
-                reply = {'boxes': bboxes, 'ids': ids, 'names': names}
+                reply = {'boxes': bboxes, 'ids': ids, 'names': names, 'fps': fps}
                 streamfe.send(client_address, zmq.SNDMORE)
                 streamfe.send(pickle.dumps(frame), zmq.SNDMORE)
                 streamfe.send_json(reply)

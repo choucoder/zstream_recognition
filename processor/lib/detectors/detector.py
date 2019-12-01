@@ -40,5 +40,5 @@ class DlibDetector(object):
 
 	def getBoxes(self, *args):
 
-		return face_locations(args[0], model='cnn')
+		return self.face_locations(args[0], model='cnn')
 

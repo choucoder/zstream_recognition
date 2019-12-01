@@ -96,7 +96,7 @@ if __name__ == '__main__':
     factory.protocol = WebSocketServer
 
     loop = asyncio.get_event_loop()
-    coro = loop.create_server(factory, host='0.0.0.0', port=5050)
+    coro = loop.create_server(factory, host='0.0.0.0', port=8080)
     server = loop.run_until_complete(coro)
 
     print("[INFO] WebSocketServer has been created.")

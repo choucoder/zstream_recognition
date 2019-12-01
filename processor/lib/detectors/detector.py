@@ -36,6 +36,7 @@ class DlibDetector(object):
 	def __init__(self):
 		
 		from face_recognition import face_locations
+		self.face_locations = face_locations
 
 	def getBoxes(self, *args):
 

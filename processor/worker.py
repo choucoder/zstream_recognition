@@ -48,7 +48,7 @@ class DeepLearningWorker(object):
                 reply = b"READY"
                 # Facial recognition work
                 frame = pickle.loads(data)
-                frame = resize(frame, width=640, height=480)
+                # frame = resize(frame, width=640, height=480)
                 bboxes = self.detector.getBoxes(frame)
 
                 # bboxes = self.detector.getBoxes(frame, confidence=0.8)

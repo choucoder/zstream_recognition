@@ -47,7 +47,8 @@ class DeepLearningWorker(object):
                 reply = b"READY"
                 # Facial recognition work
                 image = pickle.loads(frame)
-                bboxes = self.detector.getBoxes(image, confidence=0.8)
+                # bboxes = self.detector.getBoxes(image, confidence=0.8)
+                bboxes = self.detector.getBoxes(image)
                 encodings = face_encodings(image, bboxes)
                 ids, names = self.handlerSearch.search(encodings, matches=200, confidence=0.025)
                 worker.send_multipart([client_address, b"", reply])

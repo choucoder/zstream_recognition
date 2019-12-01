@@ -4,7 +4,7 @@ import pickle
 from uuid import uuid4
 from imutils import resize
 from face_recognition import face_encodings
-from lib.detectors.detector import MtcnnDetector
+from lib.detectors.detector import MtcnnDetector, DlibDetector
 from lib.recognition.recognition import HandlerSearch
 
 class DeepLearningWorker(object):
@@ -17,7 +17,7 @@ class DeepLearningWorker(object):
         self.status_url = status_url
         self._terminated = False
 
-        self.detector = MtcnnDetector()
+        self.detector = DlibDetector()
         self.handlerSearch = HandlerSearch()
         self.handlerSearch.prepare_for_searches()
     

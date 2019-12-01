@@ -54,7 +54,7 @@ class WebSocketClient(Thread):
                 fps = round(frames/elapsedTime, 2)
 
                 try:
-                    frame = imutils.resize(frame, width=640, height=480)
+                    # frame = imutils.resize(frame, width=640, height=480)
                     ids = reply['ids']
                     names = reply['names']
                     frame = drawFaces(frame, reply['boxes'], ids, names)

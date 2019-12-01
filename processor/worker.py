@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 import zmq
+import pickle
 from uuid import uuid4
+from face_recognition import face_encodings
+from lib.detectors.detector import MtcnnDetector
+from lib.recognition.recognition import HandlerSearch
 
 class DeepLearningWorker(object):
 
@@ -11,6 +15,10 @@ class DeepLearningWorker(object):
         self.stream_url = stream_url
         self.status_url = status_url
         self._terminated = False
+
+        self.detector = MtcnnDetector()
+        self.handlerSearch = HandlerSearch()
+        self.handlerSearch.prepare_for_searches()
     
     @property
     def terminated(self):
@@ -37,9 +45,18 @@ class DeepLearningWorker(object):
             try:
                 client_address, _, frame = worker.recv_multipart()
                 reply = b"READY"
+                # Facial recognition work
+                image = pickle.loads(frame)
+                bboxes = self.detector.getBoxes(image, confidence=0.8)
+                encodings = face_encodings(image, bboxes)
+                ids, names = self.handlerSearch.search(encodings, matches=200, confidence=0.025)
                 worker.send_multipart([client_address, b"", reply])
                 # Send frame and json response to streaming server
-                streamfe.send_multipart([client_address, frame, reply])
+                reply = {'boxes': bboxes, 'ids': ids, 'names': names}
+                streamfe.send(client_address, zmq.SNDMORE)
+                streamfe.send(frame, zmq.SNDMORE)
+                streamfe.send_json(reply)
+                #streamfe.send_multipart([client_address, frame, bytes(reply, 'utf-8').decode('utf-8')])
             except zmq.ZMQError as e:
                 if e.strerror == "Context was terminated":
                     break

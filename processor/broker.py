@@ -57,7 +57,8 @@ class InferenceBroker(object):
                 if msg[0] == b'0x1':
                     print("[INFO] Worker {} has been connected.".format(worker_address))
                 else:
-                    self.frontend.send_multipart(msg)
+                    pass
+                    #self.frontend.send_multipart(msg)
 
             if (self.statefe in sockets and sockets[self.statefe] == zmq.POLLIN):
                 (worker_address, signal) = self.statefe.recv_multipart()

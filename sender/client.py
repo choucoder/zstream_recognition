@@ -5,6 +5,9 @@ from cv2 import VideoCapture
 from threading import Thread
 from imutils.video import VideoStream
 
+#25 fps with REQ
+#29 fps with DEALER
+
 class StreamClient(Thread):
     def __init__(self, parent, broker_url, camera_url, **kwargs):
         Thread.__init__(self, daemon=True, name=camera_url)
@@ -14,7 +17,10 @@ class StreamClient(Thread):
         self.broker_url = broker_url
         self.camera_url = camera_url
         self._terminated = False
-    
+
+        self.frame = None
+        self._wasCloseReader = False
+
     @property
     def terminated(self):
         return self._terminated
@@ -37,33 +43,50 @@ class StreamClient(Thread):
         else:
             return self.streamer.read()
 
-    def run(self):
-        # Network configurations
-        context = zmq.Context(io_threads=1)
-        client = context.socket(zmq.REQ)
-        identity = "Client-{}".format(self.camera_url)
-        client.setsockopt_string(zmq.IDENTITY, identity)
-        client.connect(self.broker_url)
-        # VideoStreaming configuration
-        if 'rtsp://' in self.camera_url:
-            self.streamer = VideoStream(src=self.camera_url).start()
-        else:
-            self.streamer = VideoCapture(self.camera_url)
-
+    def stream_reader(self):
         frames = 0
         startTime = time.time()
 
         while not self.terminated and not self.parent.terminated:
             try:
-                ret, frame = self.read_frame()
+                ret, self.frame = self.read_frame()
                 if not ret:
                     break
-                client.send_pyobj(frame)
-                reply = client.recv()
+
                 frames += 1
                 diffTime = time.time() - startTime
                 fps = round(frames / diffTime, 2)
-                #print(fps)
+                # print(fps)
+            except:
+                break
+        self._wasCloseReader = True
+
+    def run(self):
+        # Network configurations
+        context = zmq.Context(io_threads=1)
+        client = context.socket(zmq.DEALER)
+        identity = "Client-{}".format(self.camera_url)
+        client.setsockopt_string(zmq.IDENTITY, identity)
+        client.connect(self.broker_url)
+
+        poller = zmq.Poller()
+        poller.register(client, zmq.POLLIN)
+
+        # VideoStreaming configuration
+        if 'rtsp://' in self.camera_url:
+            self.streamer = VideoStream(src=self.camera_url).start()
+        else:
+            self.streamer = VideoCapture(self.camera_url)
+        Thread(target=self.stream_reader, args=(), daemon=True).start()
+
+        while not self.terminated and not self.parent.terminated:
+            try:
+                if self.frame is not None:
+                    client.send(b"", zmq.SNDMORE)
+                    client.send_pyobj(self.frame)
+                elif self._wasCloseReader:
+                    break
+
             except zmq.ZMQError as e:
                 if e.strerror == "Context was terminated":
                     break

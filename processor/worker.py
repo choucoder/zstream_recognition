@@ -3,6 +3,7 @@ import zmq
 import pickle
 from uuid import uuid4
 from imutils import resize
+from threading import Thread, Lock
 from face_recognition import face_encodings
 from lib.recognition.recognition import HandlerSearch
 from lib.detectors.detector import MtcnnDetector, DlibDetector
@@ -17,9 +18,14 @@ class DeepLearningWorker(object):
         self.status_url = status_url
         self._terminated = False
 
-        #self.detector = MtcnnDetector()
-        #self.handlerSearch = HandlerSearch()
-        #self.handlerSearch.prepare_for_searches()
+        self.detector = MtcnnDetector()
+        self.handlerSearch = HandlerSearch()
+        self.handlerSearch.prepare_for_searches()
+        self.current_msg = (None, None)
+        self.boxes = {}
+        self.ids, self.names = {}, {}
+        self.rThread = Thread(target=self.recognition_thread, daemon=True)
+        self.rThread.start()
     
     @property
     def terminated(self):
@@ -45,20 +51,25 @@ class DeepLearningWorker(object):
         while not self.terminated:
             try:
                 client_address, _, data = worker.recv_multipart()
-                reply = b"READY"
-                # Facial recognition work
-                frame = pickle.loads(data)
-                #frame = resize(frame, width=640, height=480)
+                self.frame = pickle.loads(data)
+                self.current_msg = (client_address, self.frame.copy())
 
-                #bboxes = self.detector.getBoxes(frame, confidence=0.8)
-                #encodings = face_encodings(frame, bboxes)
-                #ids, names = self.handlerSearch.search(encodings, matches=200, confidence=0.025)
+                if client_address not in self.boxes:
+                    self.ids[client_address] = []
+                    self.names[client_address] = []
+                    self.boxes[client_address] = []
 
-                worker.send_multipart([client_address, b"", reply])
-                # Send frame and json response to streaming server
-                reply = {'boxes': [], 'ids': [], 'names': []}
+                if (len(self.boxes[client_address]) > 0):
+                    reply = {'ids': self.ids[client_address].pop(0), 
+                            'names': self.names[client_address].pop(0),
+                            'boxes': self.boxes[client_address].pop(0)}
+                else:
+                    reply = {'boxes': [], 'ids': [], 'names': []}
+        
+                worker.send_multipart([client_address, b"", b"OK"])
+
                 streamfe.send(client_address, zmq.SNDMORE)
-                streamfe.send(pickle.dumps(frame), zmq.SNDMORE)
+                streamfe.send(pickle.dumps(self.frame), zmq.SNDMORE)
                 streamfe.send_json(reply)
 
             except zmq.ZMQError as e:
@@ -75,6 +86,17 @@ class DeepLearningWorker(object):
         if not self.terminated:
             self._terminated = True
             self.statebe.send_multipart([self.identity.encode('utf-8'), b"0x2"])
+
+    def recognition_thread(self):
+        while not self.terminated:
+            if self.current_msg[1] is not None:
+                client, frame = self.current_msg
+                boxes = self.detector.getBoxes(frame, confidence=0.8)
+                encodings = face_encodings(frame, boxes)
+                ids, names = self.handlerSearch.search(encodings, matches=30, confidence=0.025)
+                self.ids[client].append(ids)
+                self.names[client].append(names)
+                self.boxes[client].append(boxes)
 
 def main():
     try:

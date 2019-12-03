@@ -7,6 +7,7 @@ from imutils.video import VideoStream
 
 #25 fps with REQ
 #29 fps with DEALER
+#42 fps with stream_reader thread
 
 class StreamClient(Thread):
     def __init__(self, parent, broker_url, camera_url, **kwargs):
@@ -77,14 +78,16 @@ class StreamClient(Thread):
             self.streamer = VideoStream(src=self.camera_url).start()
         else:
             self.streamer = VideoCapture(self.camera_url)
-        Thread(target=self.stream_reader, args=(), daemon=True).start()
+        #Thread(target=self.stream_reader, args=(), daemon=True).start()
 
         while not self.terminated and not self.parent.terminated:
             try:
-                if self.frame is not None:
+                ret, self.frame = self.read_frame()
+
+                if self.frame is not None and ret:
                     client.send(b"", zmq.SNDMORE)
                     client.send_pyobj(self.frame)
-                elif self._wasCloseReader:
+                elif self._wasCloseReader or not ret:
                     break
 
             except zmq.ZMQError as e:

@@ -71,10 +71,11 @@ class InferenceBroker(object):
             if available_workers > 0:
                 if (self.frontend in sockets) and sockets[self.frontend] == zmq.POLLIN:
                     msg = self.frontend.recv_multipart()
-                    available_workers -= 1
-                    worker_address = workers_list.pop()
-                    msg = [worker_address, b""] + msg
-                    self.backend.send_multipart(msg)
+                    if available_workers > 0:
+                        available_workers -= 1
+                        worker_address = workers_list.pop()
+                        msg = [worker_address, b""] + msg
+                        self.backend.send_multipart(msg)
 
         self.terminated = True
 

@@ -68,7 +68,7 @@ class InferenceBroker(object):
                     workers_list.pop(worker_index)
                 print("[INFO] Worker {} has been terminated.".format(worker_address))
 
-            if available_workers > 0:
+            if available_workers >= 0:
                 if (self.frontend in sockets) and sockets[self.frontend] == zmq.POLLIN:
                     msg = self.frontend.recv_multipart()
                     if available_workers > 0:

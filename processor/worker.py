@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import zmq
+import time
 import pickle
 from uuid import uuid4
 from imutils import resize
@@ -18,7 +19,7 @@ class DeepLearningWorker(object):
         self.status_url = status_url
         self._terminated = False
 
-        self.detector = MtcnnDetector()
+        self.detector = MtcnnDetector(min_face_size=60)
         self.handlerSearch = HandlerSearch()
         self.handlerSearch.prepare_for_searches()
         self.current_msg = (None, None)
@@ -52,6 +53,7 @@ class DeepLearningWorker(object):
             try:
                 client_address, _, data = worker.recv_multipart()
                 self.frame = pickle.loads(data)
+                #self.frame = resize(self.frame, width=180)
                 self.current_msg = (client_address, self.frame.copy())
 
                 if client_address not in self.boxes:
@@ -88,6 +90,9 @@ class DeepLearningWorker(object):
             self.statebe.send_multipart([self.identity.encode('utf-8'), b"0x2"])
 
     def recognition_thread(self):
+        frames = 0
+        startTime = time.time()
+
         while not self.terminated:
             if self.current_msg[1] is not None:
                 client, frame = self.current_msg
@@ -97,6 +102,11 @@ class DeepLearningWorker(object):
                 self.ids[client].append(ids)
                 self.names[client].append(names)
                 self.boxes[client].append(boxes)
+
+                frames += 1
+                elapsedTime = time.time() - startTime
+                fps = round(frames / elapsedTime, 2)
+                #print(fps)
 
 def main():
     try:

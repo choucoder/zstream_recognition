@@ -55,7 +55,7 @@ class HandlerSearch(object):
                     break
             
             try:
-                print("[INFO] Counts: {}".format(counts))
+                #print("[INFO] Counts: {}".format(counts))
                 id_code = max(counts, key=counts.get)
                 name = founds[id_code]
                 ids.append(id_code)
@@ -72,7 +72,7 @@ class HandlerSearch(object):
         if len(newEncodings) > 0:
             newEncodings = np.array(newEncodings).astype('float32')
             assert len(newIds) == len(newEncodings)
-            #self.save_new_encodings(newIds, newEncodings)
+            self.save_new_encodings(newIds, newEncodings)
 
         #print("[INFO] elapsed time: {}".format(time.time() - startTime))
 
@@ -90,7 +90,7 @@ class HandlerSearch(object):
         # Save new encodings on mongodb
         for encoding, id_code in zip(encodings, ids_list):
             encoding = [float(x) for x in encoding]
-            Thread(target=self.save_on_db(id_code, encoding)).start()
+            Thread(target=self.save_on_db(id_code, encoding), daemon=True).start()
 
         # Add encodings to faiss index for fast search
         self.faissSearch.add(encodings)

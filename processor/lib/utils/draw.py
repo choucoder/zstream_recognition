@@ -13,19 +13,25 @@ def drawYoloObjects(frame, results):
 
 	return frame_copy
 
-def drawFaces(frame, results, ids, names):
+def drawFaces(frame, results, ids, names, r=1):
 	frame_copy = frame.copy()
 	color = [255, 0, 0]
 	
 	for i, box in enumerate(results):
 		left, top, right, bottom = box
+
+		left = int(left * r)
+		top = int(top * r)
+		right = int(right * r)
+		bottom = int(bottom * r)
+
 		cv2.rectangle(frame_copy, (left, top), (right, bottom), color, 2)
 		cv2.putText(frame_copy, names[i], (left, top - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0, 0), 1, cv2.LINE_AA)
 	return frame_copy
 
-def drawCorners(frame, boxes):
+def drawCorners(frame, boxes, names):
 
-	for bbox in boxes:
+	for i, bbox in enumerate(boxes):
 
 		x1, y1, x2, y2 = [int(c) for c in bbox]
 		w = x2 - x1
@@ -70,5 +76,14 @@ def drawCorners(frame, boxes):
 		pt1 = (x + w, y + h)
 		pt2 = (int(x + w - m * w), y + h)
 		cv2.line(frame, pt1, pt2, (255, 255, 0), 2, cv2.LINE_AA)
+
+		txtLoc = (x, y + h + 40)
+		cv2.putText(frame,
+					text=names[i],
+					org=txtLoc,
+					fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+					fontScale=0.5,
+					color=[255, 255, 0],
+					thickness=2)
 
 	return frame

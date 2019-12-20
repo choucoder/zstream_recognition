@@ -4,7 +4,7 @@ import zmq
 import json
 import time
 from pickle import loads
-from utils.draw import drawFaces
+from utils.draw import drawFaces, drawCorners
 
 url = 'tcp://0.0.0.0:5553'
 context = zmq.Context(io_threads=1)
@@ -13,21 +13,14 @@ streambe = context.socket(zmq.SUB)
 streambe.connect(url)
 streambe.setsockopt_string(zmq.SUBSCRIBE, topic_filter)
 
-frames = 0
-startTime = time.time()
-
 while True:
     msg = streambe.recv_multipart()
     client_address, frame, results = msg
     frame = loads(frame)
     results = json.loads(results)
 
-    elapsedTime = time.time() - startTime
-    frames += 1
-    fps = round(frames / elapsedTime, 2)
-
-    frame = drawFaces(frame, results['boxes'], results['ids'], results['names'])
-    cv2.putText(frame, 'fps: ' + str(fps), (int(10), int(20)),
+    frame = drawCorners(frame, results['boxes'], results['names'])
+    cv2.putText(frame, 'fps: ' + str(results['fps']), (int(10), int(20)),
                 cv2.FONT_HERSHEY_DUPLEX, 0.50, (190, 75, 23), 1)
     
     cv2.imshow(topic_filter, frame)

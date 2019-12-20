@@ -4,7 +4,7 @@ import base64
 import imutils
 from json import dumps
 from threading import Thread
-from utils.draw import drawFaces
+from utils.draw import drawFaces, drawCorners
 from cv2 import imencode, IMWRITE_JPEG_QUALITY, putText, FONT_HERSHEY_DUPLEX
 
 class WebSocketClient(Thread):
@@ -41,28 +41,22 @@ class WebSocketClient(Thread):
 
     def run(self):
 
-        frames = 0
-        startTime = time.time()
         while not self.terminated and not self.parent.terminated:
             try:
                 client_address = self.streambe.recv()
                 frame = self.streambe.recv_pyobj()
                 reply = self.streambe.recv_json()
-                
-                frames += 1
-                elapsedTime = time.time() - startTime
-                fps = round(frames/elapsedTime, 2)
 
                 try:
                     ids = reply['ids']
                     names = reply['names']
-                    frame = drawFaces(frame, reply['boxes'], ids, names)
-                    putText(frame, 'fps: ' + str(fps), (int(10), int(20)),
-                        FONT_HERSHEY_DUPLEX, 0.50, (190, 75, 23), 1)
+                    frame = drawCorners(frame, reply['boxes'], reply['names'])
+                    putText(frame, 'fps: ' + str(reply['fps']), (int(10), int(20)),
+                                FONT_HERSHEY_DUPLEX, 0.50, (255, 255, 0), 1)
                     _, image = imencode('.jpg', frame)
                     data = base64.b64encode(image).decode('utf-8')
                     response = dumps({
-                        'fps': fps,
+                        'fps': reply['fps'],
                         'type': 0,
                         'data': data,
                         'online': 1,

@@ -21,7 +21,7 @@ Este software utiliza:
 
 - Proxy Server: Servidor proxy utilizado para obtener streaming desde la Web de una cámara.
 
-- Streaming Client: Recibe (SUB) y muestra el video streaming junto a la información de las personas detectadas.
+- Streaming Client: Recibe (SUB) y muestra el video streaming en tiempo real junto a la información de las personas detectadas.
 
 ## Requerimientos
 

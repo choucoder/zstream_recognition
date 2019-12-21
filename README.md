@@ -34,6 +34,36 @@ La estructura de directorios es la siguiente:
 
 ## Instrucciones de uso
 
+Se puede usar de las siguentes maneras:
+ - Leer cada frame, procesarlo y enviarlo al servidor de streaming (detectorTest.py) o
+ - Enviar streaming hacia el face recognition streaming, procesarlo en el worker y enviarlo hacia el streaming server. (sender.py) 
+
+En resumen, si se va a utilizar el detectorTest.py, no es necesario iniciar el Face Recognition Server y el worker; en cambio, si se utiliza el sender.py, es necesario utilizar dichos procesos ya que es en estos donde se realiza la detección y el reconocimiento facial para el sender.
+
+#### Enviar streaming o enviar streaming procesado:
+
+- ```python3 processor/detectorTest.py [url-camara]```
+- ```python3 sender/sender.py [url-cam1, url-cam2, ..., url-camn]```
+
+
+Para el primer caso, tiene que estar iniciado el Streaming Server si se quiere obtener streaming procesado de esa cámara. Y, para el segundo caso, tiene que estar iniciado el Face Recognition Server y tener al menos un worker conectado para procesar el stream que envia el sender.
+
+#### Servidor de Reconocimiento facial
+- ```sudo service mongod start```
+- ```python3 processor/broker.py```
+- ```python3 processor/worker.py```
+
+#### Servidor de Streaming
+- ```python3 streaming/broker.py```
+
+#### Cliente Desktop
+- ```python3 streaming/client.py Client-[url-camara]```
+
+donde [url-camara] es la camara de la cual se quiere obtener streaming procesado.
+
+#### Cliente Web
+- Iniciar servidor proxy: ```python3 websocket/server.py```
+- Abrir websocket/index.html y en la caja de texto colocar Client-[url-camara] y dar click en streaming.
 
 ## Requerimientos
 

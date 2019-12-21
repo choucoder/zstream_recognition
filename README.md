@@ -7,3 +7,4 @@ Este software utiliza:
 - Faiss para hacer matching en la base de datos
 
 ## Arquitectura
+![](architecture.jpeg)

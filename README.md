@@ -122,3 +122,5 @@ donde [url-camara] es la camara de la cual se quiere obtener streaming procesado
 ## Licencia
 
 MIT
+
+Contribuidores: **José Chourio**, Adrian Trononis

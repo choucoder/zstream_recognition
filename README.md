@@ -23,6 +23,18 @@ Este software utiliza:
 
 - Streaming Client: Recibe (SUB) y muestra el video streaming en tiempo real junto a la información de las personas detectadas.
 
+## Estructura de directorios
+
+La estructura de directorios es la siguiente:
+
+- processor: Contiene el Face Recognition Server, el worker y el detectorTest.
+- sender: Contiene el sender.py para enviar streaming hacia el Face Recognition Server.
+- streaming: Contiene el Streaming Server y el Client Server.
+- websocket: Contiene el servidor proxy y la pagina web de prueba para visualizar streaming desde la web.
+
+## Instrucciones de uso
+
+
 ## Requerimientos
 
 ### Streaming Sender

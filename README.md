@@ -22,3 +22,45 @@ Este software utiliza:
 - Proxy Server: Servidor proxy utilizado para obtener streaming desde la Web de una cámara.
 
 - Streaming Client: Recibe (SUB) y muestra el video streaming junto a la información de las personas detectadas.
+
+## Requerimientos
+
+### Streaming Sender
+- [OpenCV 4.0.1+] (https://opencv.org)
+- [ZMQ] (https://pyzmq.readthedocs.io/en/latest/)
+
+### DetectorTest
+- OpenCV
+- zmq
+- imutils
+- MTCNN
+- Tensorflow 1.5+
+- faiss
+- face_recognition
+- mongoengine
+
+### Face Recognition Server
+- zmq
+
+### Face Recognition Worker
+- zmq
+- uuid
+- imutils
+- face_recognition
+- mtcnn
+- tensorflow
+- faiss
+- mongoengine
+
+### Streaming Server
+- zmq
+
+### Proxy Server
+- zmq
+- autobahn.asyncio.websocket
+- json
+- uuid
+
+### Streaming Client
+- zmq
+- OpenCV

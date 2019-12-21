@@ -12,7 +12,7 @@ from face_recognition import face_encodings
 from lib.recognition.recognition import HandlerSearch
 
 class InferenceWorker(object):
-    def __init__(self, camera_url='walking.mp4', 
+    def __init__(self, camera_url, 
                 stream_url='tcp://localhost:5552', 
                 processing_type='async', 
                 resize_width=256, 
@@ -123,9 +123,19 @@ class InferenceWorker(object):
 
 if __name__ == '__main__':
     try:
-        iworker = InferenceWorker(processing_type='sync')
+        help_message = '''
+        USAGE: python3 detectorTest.py [camera_url]
+        '''
+        camera_url = sys.argv[1] if len(sys.argv) > 1 else ""
+        if not camera_url:
+            print(help_message)
+            raise SystemExit
+        iworker = InferenceWorker(processing_type='sync', camera_url=camera_url)
         iworker.start_process()
     except (KeyboardInterrupt, SystemExit):
-        print("[INFO] {} was terminated".format(iworker.topic_identity))
+        pass
     finally:
-        iworker.terminate()
+        try:
+            iworker.terminate()
+        except:
+            pass

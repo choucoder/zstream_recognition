@@ -23,20 +23,32 @@ Este software utiliza:
 
 - Streaming Client: Recibe (SUB) y muestra el video streaming en tiempo real junto a la información de las personas detectadas.
 
+## Instalación
+Dependencias: OpenCV 4.0.1+, zmq, imutils, Tensorflow 1.8+, faiss, mongoengine, mtcnn, face_recognition, uuid.
+
+- Probado en Ubuntu Linux 16.04 con y sin GPU.
+- Instalar OpenCV 4.0.1 o nuevo. Recomendado instalar con ```pip3 install opencv-python``` o compilarlo con soporte para GPU (En caso de tener una).
+- Instalar Tensorflow (1.5 o nuevo) ```pip3 install tensorflow``` o ```pip3 install tensorflow-gpu``` (Recomendado).
+- Instalar zmq. ````pip3 install pyzmq```
+- Instalar imutils ```pip3 install imutils```
+- Instalar dlib (Compilar con soporte para GPU, en caso de que se vaya a usar detectionTest.py o worker.py)
+- Instalar face_recognition
+- Instalar faiss ```pip3 install faiss-cpu``` (Soporte para GPU recomendado).
+
 ## Estructura de directorios
 
 La estructura de directorios es la siguiente:
 
-- processor: Contiene el Face Recognition Server, el worker y el detectorTest.
-- sender: Contiene el sender.py para enviar streaming hacia el Face Recognition Server.
-- streaming: Contiene el Streaming Server y el Client Server.
-- websocket: Contiene el servidor proxy y la pagina web de prueba para visualizar streaming desde la web.
+1. **processor**: Contiene el Face Recognition Server, el worker y el detectorTest.
+2. **sender:** Contiene el sender.py para enviar streaming hacia el Face Recognition Server.
+3. **streaming:** Contiene el Streaming Server y el Client Server.
+4. **websocket:** Contiene el servidor proxy y la pagina web de prueba para visualizar streaming desde la web.
 
 ## Instrucciones de uso
 
 Se puede usar de las siguentes maneras:
- - Leer cada frame, procesarlo y enviarlo al servidor de streaming (detectorTest.py) o
- - Enviar streaming hacia el face recognition streaming, procesarlo en el worker y enviarlo hacia el streaming server. (sender.py) 
+ 1. Leer cada frame, procesarlo y enviarlo al servidor de streaming (detectorTest.py) o
+ 2. Enviar streaming hacia el face recognition streaming, procesarlo en el worker y enviarlo hacia el streaming server. (sender.py) 
 
 En resumen, si se va a utilizar el detectorTest.py, no es necesario iniciar el Face Recognition Server y el worker; en cambio, si se utiliza el sender.py, es necesario utilizar dichos procesos ya que es en estos donde se realiza la detección y el reconocimiento facial para el sender.
 
@@ -106,3 +118,7 @@ donde [url-camara] es la camara de la cual se quiere obtener streaming procesado
 ### Streaming Client
 - zmq
 - OpenCV
+
+## Licencia
+
+MIT

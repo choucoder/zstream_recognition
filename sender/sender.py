@@ -31,8 +31,11 @@ class StreamHandler(object):
         print("[INFO] Starting StreamHandler...")
         while not self.terminated:
             time.sleep(2.5)
-            #cameras = ['rtsp://localhost-video.mp4', 'rtsp://localhost-video2.mp4']
-            for camera in self.cameras:
+            if self.cameras:
+                cameras = self.cameras
+            else:
+                cameras = ['rtsp://localhost-video.mp4', 'rtsp://localhost-video2.mp4']
+            for camera in cameras:
                 camera_url = url_format(camera)
                 if not self.is_streaming(camera_url) and online(camera):
                     self.stream_clients[camera_url] = StreamClient(self, self.broker_url, camera_url)

@@ -64,11 +64,14 @@ class StreamClient(Thread):
 
     def run(self):
         # Network configurations
-        context = zmq.Context(io_threads=1)
+        context = zmq.Context()
         client = context.socket(zmq.DEALER)
         identity = "Client-{}".format(self.camera_url)
         client.setsockopt_string(zmq.IDENTITY, identity)
         client.connect(self.broker_url)
+
+        client.hwm = 50
+        client.sndhwm = 50
 
         poller = zmq.Poller()
         poller.register(client, zmq.POLLIN)

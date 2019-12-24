@@ -34,10 +34,10 @@ class FSearch(object):
         encodings = np.array(encodings).astype('float32')
         self.index.add(encodings)
 
-    def save_index(self, **kwargs):
+    def save_index(self, name='faiss_recognition.index'):
         try:
-            faiss.write_index(self.index, 'faiss_recognition.index')
-            print("[INFO] Index has been written")
+            faiss.write_index(self.index, name)
+            print("[INFO] Index {} has been written".format(name))
         except:
             pass
 

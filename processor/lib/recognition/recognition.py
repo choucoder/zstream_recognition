@@ -18,6 +18,7 @@ class HandlerSearch(object):
             if self.faissSearch.index == None:
                 self.faissSearch.train(self.updater.data['encodings'])
                 self.faissSearch.add(self.updater.data['encodings'])
+                self.faissSearch.save_index(name='faiss.index')
             else:
                 self.faissSearch.add(self.updater.data['encodings'])
             print("[INFO] Handler Search has been prepared.")

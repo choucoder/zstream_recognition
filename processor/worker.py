@@ -11,26 +11,31 @@ from lib.detectors.detector import MtcnnDetector, DlibDetector
 
 class DeepLearningWorker(object):
 
-    def __init__(self, worker_url, stream_url, status_url, **kwargs):
+    def __init__(self, worker_url, stream_url, status_url,
+                resize_width=256, min_face_size=17, **kwargs):
         if kwargs:
             raise TypeError("Unrecognized keyword argument: {}".format(kwargs))
         self.worker_url = worker_url
         self.stream_url = stream_url
         self.status_url = status_url
+        self.resize_width = resize_width
         self._terminated = False
 
-        self.detector = MtcnnDetector(min_face_size=60)
+        self.detector = MtcnnDetector(min_face_size=min_face_size)
         self.handlerSearch = HandlerSearch()
         self.handlerSearch.prepare_for_searches()
-        self.current_msg = (None, None)
-        self.boxes = {}
-        self.ids, self.names = {}, {}
-        self.rThread = Thread(target=self.recognition_thread, daemon=True)
-        self.rThread.start()
     
     @property
     def terminated(self):
         return self._terminated
+
+    def _toOriginal(self, boxes, r):
+        bboxes = []
+        for (left, top, right, bottom) in boxes:
+            left, top = int(left * r), int(top * r)
+            right, bottom = int(right * r), int(bottom * r)
+            bboxes.append([left, top, right, bottom])
+        return bboxes
 
     def start_worker(self):
         ctx = zmq.Context()
@@ -41,6 +46,8 @@ class DeepLearningWorker(object):
 
         streamfe = ctx.socket(zmq.PUB)
         streamfe.connect(self.stream_url)
+        streamfe.hwm = 100
+        streamfe.sndhwm = 100
 
         self.statebe = ctx.socket(zmq.PUSH)
         self.statebe.connect(self.status_url)
@@ -48,30 +55,32 @@ class DeepLearningWorker(object):
         print("[INFO] Worker {} is running...".format(self.identity))
 
         worker.send(b"0x1")
+        frames = 0
+        startTime = time.time()
 
         while not self.terminated:
             try:
                 client_address, _, data = worker.recv_multipart()
-                self.frame = pickle.loads(data)
-                #self.frame = resize(self.frame, width=180)
-                self.current_msg = (client_address, self.frame.copy())
+                frame = pickle.loads(data)
+                resizedFrame = resize(frame, width=self.resize_width)
+                r = frame.shape[1] / float(resizedFrame.shape[1])
 
-                if client_address not in self.boxes:
-                    self.ids[client_address] = []
-                    self.names[client_address] = []
-                    self.boxes[client_address] = []
+                boxes = self.detector.getBoxes(resizedFrame)
+                boxes = self._toOriginal(boxes, r)
+                encodings = face_encodings(frame, boxes)
+                ids, names = self.handlerSearch.search(encodings, matches=20, confidence=0.025)
 
-                if (len(self.boxes[client_address]) > 0):
-                    reply = {'ids': self.ids[client_address].pop(0), 
-                            'names': self.names[client_address].pop(0),
-                            'boxes': self.boxes[client_address].pop(0)}
-                else:
-                    reply = {'boxes': [], 'ids': [], 'names': []}
+                frames += 1
+                elapsedTime = time.time() - startTime
+                fps = round(frames / elapsedTime, 2)
+
+                reply = {'boxes': boxes, 'ids': ids, 
+                        'names': names, 'fps': fps}
         
                 worker.send_multipart([client_address, b"", b"OK"])
 
                 streamfe.send(client_address, zmq.SNDMORE)
-                streamfe.send(pickle.dumps(self.frame), zmq.SNDMORE)
+                streamfe.send(pickle.dumps(frame), zmq.SNDMORE)
                 streamfe.send_json(reply)
 
             except zmq.ZMQError as e:
@@ -88,25 +97,6 @@ class DeepLearningWorker(object):
         if not self.terminated:
             self._terminated = True
             self.statebe.send_multipart([self.identity.encode('utf-8'), b"0x2"])
-
-    def recognition_thread(self):
-        frames = 0
-        startTime = time.time()
-
-        while not self.terminated:
-            if self.current_msg[1] is not None:
-                client, frame = self.current_msg
-                boxes = self.detector.getBoxes(frame, confidence=0.8)
-                encodings = face_encodings(frame, boxes)
-                ids, names = self.handlerSearch.search(encodings, matches=30, confidence=0.025)
-                self.ids[client].append(ids)
-                self.names[client].append(names)
-                self.boxes[client].append(boxes)
-
-                frames += 1
-                elapsedTime = time.time() - startTime
-                fps = round(frames / elapsedTime, 2)
-                #print(fps)
 
 def main():
     try:

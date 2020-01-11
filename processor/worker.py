@@ -144,7 +144,7 @@ class DeepLearningWorker(object):
                 frames += 1
                 elapsedTime = time.time() - startTime
                 fps = round(frames / elapsedTime, 2)
-
+                
                 reply = {'boxes': boxes, 'ids': ids, 
                         'names': names, 'fps': fps, 'info': info}
                 self.send_response(client_address, frame, reply)

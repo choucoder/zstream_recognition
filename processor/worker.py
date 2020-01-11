@@ -105,6 +105,9 @@ class DeepLearningWorker(object):
 
             except IndexError:
                 pass
+            except requests.exceptions.ConnectionError:
+                print("[ERRNO] Failed to establish connection with API {}".format(self.api_url))
+                time.sleep(.5)
 
     def start_worker(self):
         ctx = zmq.Context()

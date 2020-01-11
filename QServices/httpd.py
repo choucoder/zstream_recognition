@@ -1,6 +1,10 @@
+import os
 import zmq
 import sys
+import pickle
 import configparser
+from uuid import uuid4
+from time import time
 from flask import Flask
 from threading import Thread
 from os import makedirs, path, urandom
@@ -19,7 +23,13 @@ class QServer(object):
         self.workers_list = []
         self.available_workers = 0
         self._terminated = False
+        self.dirpath = os.path.join(os.getcwd(), 'tmp')
 
+        if not os.path.exists(self.dirpath):
+            os.mkdir(self.dirpath)
+        self.Files = []
+        self.load_tmp_files()
+    
     @property
     def terminated(self):
         return self._terminated
@@ -28,6 +38,41 @@ class QServer(object):
         self._terminated = True
         self.backend.close()
         self.frontend.close()
+
+    def load_tmp_files(self):
+        if os.path.exists(self.dirpath):
+            for _, _, files in os.walk(self.dirpath):
+                for name in files:
+                    filename = os.path.join(self.dirpath, name)
+                    self.Files.append(filename)
+        self.Files.sort()
+        print("[INFO] Files loaded from {}".format(self.dirpath))
+
+    def saveQueryFile(self, msg):
+        filename = time()
+        filename = str(filename).replace('.', '')
+        filename += str(uuid4()).replace('-', '')[: 4] + '.zy'
+
+        filepath = os.path.join(self.dirpath, filename)
+
+        with open(filepath, 'wb') as f:
+            f.write(pickle.dumps(msg))
+            f.close()
+
+        self.Files.append(filepath)
+
+    def loadQueryFile(self):
+        try:
+            filepath = self.Files[0]
+            print("laoding.: {}".format(filepath))
+            with open(filepath, 'rb') as f:
+                msg = pickle.loads(f.read())
+                f.close()
+            os.remove(filepath)
+            self.Files.pop(0)
+            return msg
+        except Exception as e:
+            raise IndexError
 
     def run(self):
         
@@ -63,7 +108,9 @@ class QServer(object):
                 else:
                     self.frontend.send_multipart(msg)
                 try:
-                    msg = self.FaceQ.pop(0)
+                    #msg = self.FaceQ.pop(0)
+                    #msg = [worker_address, b""] + msg
+                    msg = self.loadQueryFile()
                     msg = [worker_address, b""] + msg
                     self.backend.send_multipart(msg)
                 except IndexError:
@@ -82,14 +129,13 @@ class QServer(object):
             if (self.frontend in sockets and sockets[self.frontend] == zmq.POLLIN):
                 msg = self.frontend.recv_multipart()
                 if 'proxy' in str(msg[0]):
+                    self.saveQueryFile(msg)
                     if self.available_workers > 0:
                         self.available_workers -= 1
                         worker_address = self.workers_list.pop(0)
-                        msg = [worker_address, b""] + msg
+                        msg = [worker_address, b""] + self.loadQueryFile()
                         self.backend.send_multipart(msg)
-                    else:
-                        # QWorkers are busy so, we are going to Push to Queue
-                        self.FaceQ.append(msg)
+
         ctx.term()
         self.terminate()
 

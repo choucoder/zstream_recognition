@@ -8,17 +8,26 @@ from face_recognition import face_locations
 from threading import Thread as thread
 from time import sleep, time
 from uuid import uuid4
+from queueProcess import QueueProcess
+from lib.get_serial import get_hashed_mbserial
 
 class MainThread(object):
 	frames = []
 	terminated = False
 
 	def __init__(self, source):
+		self.camera_url = source
+		self.mb_serial = get_hashed_mbserial()
 		self.checkFolder()
 		thread(target=self.captureThread, args=(source,)).start()
 		while not self.frames:
 			sleep(0.3)
 		thread(target=self.promptThread).start()
+		self.queueThread = QueueProcess(self)
+		self.queueThread.start()
+
+	def terminate(self):
+		self.terminated = True
 
 	def checkFolder(self):
 		folder = 'queue'
@@ -78,5 +87,8 @@ if __name__ == '__main__':
 	try:
 		source = sys.argv[1]
 	except:
-		source = 'video.mp4'
-	MainThread(source)
+		source = 0
+	try:
+		main = MainThread(source)
+	except (KeyboardInterrupt, SystemExit):
+		main.terminate()

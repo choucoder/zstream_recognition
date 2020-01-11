@@ -1,18 +1,19 @@
 import zmq
 import sys
+import configparser
 from flask import Flask
 from threading import Thread
 from os import makedirs, path, urandom
 
 class QServer(object):
 
-    def __init__(self, frontend_url, backend_url, **kwargs):
+    def __init__(self, frontend_url, backend_url, statefe_url, **kwargs):
         if kwargs:
             raise TypeError("Unrecognized keyword arguments {}".format(kwargs))
         
         self.frontend_url = frontend_url
         self.backend_url = backend_url
-        self.statefe_url = "tcp://*:8003"
+        self.statefe_url = statefe_url
         self.FaceQ = []
         self.EstimationQ = []
         self.workers_list = []
@@ -80,22 +81,26 @@ class QServer(object):
 
             if (self.frontend in sockets and sockets[self.frontend] == zmq.POLLIN):
                 msg = self.frontend.recv_multipart()
-                if self.available_workers > 0:
-                    self.available_workers -= 1
-                    worker_address = self.workers_list.pop(0)
-                    msg = [worker_address, b""] + msg
-                    self.backend.send_multipart(msg)
-                else:
-                    # QWorkers are busy so, we are going to Push to Queue
-                    self.FaceQ.append(msg)
+                if 'proxy' in str(msg[0]):
+                    if self.available_workers > 0:
+                        self.available_workers -= 1
+                        worker_address = self.workers_list.pop(0)
+                        msg = [worker_address, b""] + msg
+                        self.backend.send_multipart(msg)
+                    else:
+                        # QWorkers are busy so, we are going to Push to Queue
+                        self.FaceQ.append(msg)
         ctx.term()
         self.terminate()
 
 def main():
     try:
-        frontend_url = 'tcp://*:8001'
-        backend_url = 'tcp://*:8002'
-        qserver = QServer(frontend_url, backend_url)
+        params = configparser.ConfigParser()
+        params.read("config.ini")
+        frontend_url = 'tcp://*:{}'.format(params.get("frontend", "port"))
+        backend_url = 'tcp://*:{}'.format(params.get("backend", "port"))
+        statefe_url = 'tcp://*:{}'.format(params.get("statefe", "port"))
+        qserver = QServer(frontend_url, backend_url, statefe_url)
         qserver.run()
     
     except (KeyboardInterrupt, SystemExit):

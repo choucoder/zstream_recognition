@@ -5,6 +5,7 @@ import json
 import time
 import pickle
 import requests
+import configparser
 import numpy as np
 from cv2 import imdecode
 from base64 import b64encode, b64decode
@@ -17,11 +18,12 @@ from lib.detectors.detector import MtcnnDetector, DlibDetector
 
 class DeepLearningWorker(object):
 
-    def __init__(self, worker_url, stream_url, status_url,
+    def __init__(self, worker_url, stream_url, status_url, api_url,
                 resize_width=256, min_face_size=17, mode="queue", **kwargs):
         if kwargs:
             raise TypeError("Unrecognized keyword argument: {}".format(kwargs))
         self.mode = mode
+        self.api_url = api_url
         self.worker_url = worker_url
         self.stream_url = stream_url
         self.status_url = status_url
@@ -30,8 +32,11 @@ class DeepLearningWorker(object):
         self.processedQueue = []
 
         self.detector = MtcnnDetector(min_face_size=min_face_size)
-        self.handlerSearch = HandlerSearch()
-        self.handlerSearch.prepare_for_searches()
+        #self.handlerSearch = HandlerSearch()
+        #self.handlerSearch.prepare_for_searches()
+        if self.mode == "queue":
+            self.senderThread = Thread(target=self.sender, args=())
+            self.senderThread.start()
     
     @property
     def terminated(self):
@@ -68,17 +73,36 @@ class DeepLearningWorker(object):
                 self.worker.send(client_address, zmq.SNDMORE)
                 self.worker.send(b"", zmq.SNDMORE)
                 self.worker.send_json(response)
+            
+            ids, names = response['ids'], response['names']
+            header = response['info']
 
-    def senderThread(self):
+            for i in range(len(ids)):
+                resp = {
+                    'person_id': ids[i],
+                    'timestamp': header['timestamp'],
+                    'name': names[i],
+                    'mb_serial': header['mb_serial'],
+                    'camera_url': header['camera_url'],
+                    'pictures': [],
+                    'event_type': 'detection',
+                    'detection_type': 'person',
+                }
+                self.processedQueue.append(resp)
+
+    def sender(self):
         while not self.terminated:
             try:
                 response = self.processedQueue[0]
                 resp = requests.post(
-                    url='http://0.0.0.0:8000/events',
+                    url=self.api_url,
                     json=response
                 )
-                if resp["status"] == 200:
-                    del self.processedQueue[0]
+                print(response)
+                resp = resp.json()
+                if resp["status"] == 400:
+                    self.processedQueue.pop(0)
+
             except IndexError:
                 pass
 
@@ -114,8 +138,9 @@ class DeepLearningWorker(object):
                 boxes = self.detector.getBoxes(resizedFrame)
                 boxes = self._toOriginal(boxes, r)
                 encodings = face_encodings(frame, boxes)
-                ids, names = self.handlerSearch.search(encodings, matches=20, confidence=0.025)
-
+                #ids, names = self.handlerSearch.search(encodings, matches=20, confidence=0.025)
+                ids = ["Unknown"]*len(boxes)
+                names = ids
                 frames += 1
                 elapsedTime = time.time() - startTime
                 fps = round(frames / elapsedTime, 2)
@@ -137,14 +162,23 @@ class DeepLearningWorker(object):
     def terminate(self):
         if not self.terminated:
             self._terminated = True
-            self.statebe.send_multipart([self.identity.encode('utf-8'), b"0x2"])
+            self.statebe.send_multipart([self.identity.encode('utf-8'), b"KILLED"])
 
 def main():
     try:
+        params = configparser.ConfigParser()
+        params.read('config.ini')
+        
+        worker_url = 'tcp://{}:{}'.format(params.get("backend", "host"), params.get("backend", "port"))
+        status_url = "tcp://{}:{}".format(params.get("statefe", "host"), params.get("statefe", "port"))
+        stream_url = "tcp://{}:{}".format(params.get("streaming", "host"), params.get("streaming", "port"))
+        api_url = "http://{}:{}/event".format(params.get("api", "host"), params.get("api", "port"))
+
         worker = DeepLearningWorker(
-            worker_url='tcp://localhost:8002', 
-            stream_url='tcp://localhost:5552',
-            status_url='tcp://localhost:8003')
+            worker_url=worker_url, 
+            stream_url=stream_url,
+            status_url=status_url,
+            api_url=api_url)
         worker.start_worker()
     except (KeyboardInterrupt, SystemExit):
         pass

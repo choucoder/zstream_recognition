@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from lib.database.connection import test_default_connect
+from lib.database.connection import test_default_connect, custom_connect
 from lib.database.amodels import KnownPerson, UnknownPerson
 
 class Updater(object):
@@ -36,7 +36,6 @@ class Updater(object):
                         self.data['encodings'].append(
                             np.array(encoding)
                         )
-            
             for person in KnownPerson.objects.filter():
                 if not person.dni in self.data['ids']:
                     for encoding in person.encodings:

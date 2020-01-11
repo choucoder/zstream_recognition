@@ -23,7 +23,7 @@ class HandlerSearch(object):
                 self.faissSearch.add(self.updater.data['encodings'])
             print("[INFO] Handler Search has been prepared.")
         except Exception as e:
-            print("[INFO] {}".format(e))
+            print("[ERRNO] {}".format(e))
 
     def search(self, encodings, matches=5, confidence=0.09):
         distances, indexes = self.faissSearch.search(encodings, matches)

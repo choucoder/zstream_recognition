@@ -4,18 +4,29 @@ from uuid import uuid4
 from threading import Thread
 from os import makedirs, path, urandom
 import json
+import configparser
 
 app = Flask(__name__)
 app.secret_key = urandom(12)
+params = configparser.ConfigParser()
+params.read("config.ini")
+
 ctx = zmq.Context()
-ml_url = 'tcp://0.0.0.0:8001'
+ml_url = 'tcp://{}:{}'.format(params.get("frontend", "host"),
+    params.get("frontend", "port"))
+
+@app.route('/get', methods=['GET'])
+def itworks():
+    content = request.json
+    print(content)
+    return Response(response={}, status=200, mimetype="application/json")
 
 @app.route('/person-query', methods=['POST'])
 def send_image():
     content = request.json
     if not content["wait"]:
         client = ctx.socket(zmq.DEALER)
-        identity = str(uuid4()).replace('-', '')[: 8]
+        identity = "proxy-" + str(uuid4()).replace('-', '')[: 8]
         client.setsockopt_string(zmq.IDENTITY, identity)
         client.connect(ml_url)
 
@@ -33,7 +44,7 @@ def send_image():
         }), status=200, mimetype='application/json')
     else:
         client = ctx.socket(zmq.REQ)
-        identity = str(uuid4()).replace('-', '')[: 8]
+        identity = "proxy-" + str(uuid4()).replace('-', '')[: 8]
         client.setsockopt_string(zmq.IDENTITY, identity)
         client.connect(ml_url)
 
@@ -47,5 +58,8 @@ def send_image():
         }), status=200, mimetype="application/json")
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8443, debug=True)
+    host = params.get("proxy", "host")
+    port = params.get("proxy", "port")
+
+    app.run(host=host, port=port, debug=True)
      

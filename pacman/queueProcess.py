@@ -49,7 +49,7 @@ class QueueProcess(Thread):
 									'picture': raw,
 									'filename': name,
 									'key': key[0],
-									'wait': True,
+									'wait': False,
 									"mode": "queue",
 									"camera_url": self.parent.camera_url,
 									"mb_serial": self.parent.mb_serial,

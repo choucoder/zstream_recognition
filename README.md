@@ -39,7 +39,7 @@ La estructura de directorios es la siguiente:
 
 1. **doc**: Archivos de documentación.
 2. **pacman:** Contiene el detectioTest.py para leer streaming y queueProcess para cargar y enviar frames en JSON (por los momentos se hace via http este proceso).
-3. **services:** Contiene servidor proxy para consultas hechas mediante http y el minddleware http.
+3. **services:** Contiene servidor proxy para consultas hechas mediante http y el minddleware con sockets tcp.
 4. **workers:** Contiene workers para reconocimiento facial.
 
 ## Instrucciones de uso

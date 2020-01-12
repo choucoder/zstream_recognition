@@ -19,7 +19,7 @@ Los siguientes servicios utilizan:
 
 - QService: Este servidor actua de middleware entre la pacman, los QFace y los Workers. Obtiene los frames enviados via http o via socket, los encola si no hay worker disponible y cuando haya un worker disponible, los envia a este disponible para realizar Reconocimiento facial sobre este utilizando balanceo de carga.
 
-- Worker: Realiza detección de rostros y reconocimiento facial sobre los frames recibidos y envia la respuesta ala api para el registro de los eventos de deteccion.
+- Worker: Realiza detección de rostros y reconocimiento facial sobre los frames recibidos y envia la respuesta a la API para el registro de los eventos de deteccion.
 
 ## Instalación
 Dependencias: OpenCV 4.0.1+, zmq, imutils, Tensorflow 1.8+, faiss, mongoengine, mtcnn, face_recognition, uuid.

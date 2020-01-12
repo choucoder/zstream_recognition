@@ -1,4 +1,4 @@
-# ZEYE facial recognition
+# ZEYE Qfacial recognition
 Software de reconocimiento facial en tiempo real.
 
 Este software utiliza:
@@ -8,7 +8,7 @@ Este software utiliza:
 
 ## Arquitectura
 La arquitectura del software se muestra en la imagen: 
-![](architecture.jpeg)
+![](doc/architecture.jpeg)
 
 - Streaming Sender: Este proceso recoge streaming desde una o varias cámaras y lo envia hacia el Servidor de reconocimiento para ser procesado. En otras palabras, envia cada frame leido del flujo de la cámara al servidor de Reconocimiento.
 

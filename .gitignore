@@ -3,6 +3,8 @@ trash/
 .vscode/
 .queue/
 .git/
+services/tmp/
+pacman/queue/
 
 *.pyc
 *.mp4
@@ -17,4 +19,5 @@ trash/
 *.dia
 *.jpg
 *.zy
+*.index
 queue/

@@ -77,7 +77,6 @@ La estructura de directorios es la siguiente:
 - mongoengine
 
 ## Licencia
-
 MIT
 
 Contribuidores: **José Chourio**, **Adrian Trononis**, **Delkys Welffer**

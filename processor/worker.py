@@ -22,7 +22,6 @@ class SIGINT_handler():
         self.SIGINT = False
     
     def signal_handler(self, signal, frame):
-        print("Aja")
         self.SIGINT = True
 
 class DeepLearningWorker(object):

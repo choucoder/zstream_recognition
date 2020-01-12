@@ -64,15 +64,21 @@ class QServer(object):
     def loadQueryFile(self):
         try:
             filepath = self.Files[0]
-            print("laoding.: {}".format(filepath))
+            print("laoding.: {}".format(filepath.split('/')[-1]))
             with open(filepath, 'rb') as f:
                 msg = pickle.loads(f.read())
                 f.close()
             os.remove(filepath)
-            self.Files.pop(0)
+            del self.Files[0]
             return msg
-        except Exception as e:
+        except IndexError:
             raise IndexError
+
+        except Exception as e:
+            os.remove(filepath)
+            del self.Files[0]
+            print("[ERRNO] File was deleted by ran out of input")
+            raise FileExistsError
 
     def run(self):
         
@@ -80,9 +86,13 @@ class QServer(object):
         # Server to receive frames via http requests
         self.frontend = ctx.socket(zmq.ROUTER)
         self.frontend.bind(self.frontend_url)
+        self.frontend.hwm = 100
+        self.frontend.sndhwm = 100
+        
         # Set endpoint to QWorkers
         self.backend = ctx.socket(zmq.ROUTER)
         self.backend.bind(self.backend_url)
+        self.backend.sndhwm = 100
 
         # status socket
         self.statefe = ctx.socket(zmq.PULL)
@@ -95,7 +105,7 @@ class QServer(object):
         print("[INFO] Qserver at {} is ONLINE".format(self.frontend_url))
 
         while not self.terminated:
-            sockets = dict(poller.poll())
+            sockets = dict(poller.poll(1))
 
             if (self.backend in sockets and sockets[self.backend] == zmq.POLLIN):
                 msg = self.backend.recv_multipart()
@@ -108,12 +118,10 @@ class QServer(object):
                 else:
                     self.frontend.send_multipart(msg)
                 try:
-                    #msg = self.FaceQ.pop(0)
-                    #msg = [worker_address, b""] + msg
                     msg = self.loadQueryFile()
                     msg = [worker_address, b""] + msg
                     self.backend.send_multipart(msg)
-                except IndexError:
+                except (IndexError, FileExistsError):
                     self.workers_list.append(worker_address)
                     self.available_workers += 1
             
@@ -135,6 +143,16 @@ class QServer(object):
                         worker_address = self.workers_list.pop(0)
                         msg = [worker_address, b""] + self.loadQueryFile()
                         self.backend.send_multipart(msg)
+
+            if len(self.Files) > 0 and self.available_workers > 0:
+                try:
+                    msg = self.loadQueryFile()
+                    msg = [worker_address, b""] + msg
+                    worker_address = self.workers_list.pop(0)
+                    self.available_workers -= 1
+                    self.backend.send_multipart(msg)
+                except (IndexError, FileExistsError) as e:
+                    pass
 
         ctx.term()
         self.terminate()

@@ -79,4 +79,4 @@ La estructura de directorios es la siguiente:
 ## Licencia
 MIT
 
-Contribuidores: **José Chourio**, **Adrian Trononis**, **Delkys Welffer**
+Contribuidores: **José Chourio**, **Adrian Troconis**, **Delkys Welffer**

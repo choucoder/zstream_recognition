@@ -10,9 +10,10 @@ import configparser
 import numpy as np
 from cv2 import imdecode
 from base64 import b64encode, b64decode
+from lib.utils.utils import toOriginal
 from uuid import uuid4
 from imutils import resize
-from threading import Thread, Lock
+from threading import Thread
 from face_recognition import face_encodings
 from lib.recognition.recognition import HandlerSearch
 from lib.detectors.detector import MtcnnDetector, DlibDetector
@@ -30,6 +31,8 @@ class DeepLearningWorker(object):
                 resize_width=256, min_face_size=17, mode="queue", **kwargs):
         if kwargs:
             raise TypeError("Unrecognized keyword argument: {}".format(kwargs))
+        
+        ##### Attributes settings #####
         self.mode = mode
         self.handler = handler
         self.api_url = api_url
@@ -40,6 +43,7 @@ class DeepLearningWorker(object):
         self._terminated = False
         self.processedQueue = []
 
+        ##### Face recognition settings #####
         self.detector = MtcnnDetector(min_face_size=min_face_size)
         #self.handlerSearch = HandlerSearch()
         #self.handlerSearch.prepare_for_searches()
@@ -47,20 +51,20 @@ class DeepLearningWorker(object):
             self.senderThread = Thread(target=self.sender, args=())
             self.senderThread.start()
 
-        ctx = zmq.Context()
-        self.worker = ctx.socket(zmq.REQ)
+        ##### Networks settings #####
+        self.ctx = zmq.Context()
+        self.worker = self.ctx.socket(zmq.REQ)
         self.identity = str(uuid4()).replace('-', '')[: 8]
         self.worker.setsockopt_string(zmq.IDENTITY, self.identity)
         self.worker.connect(self.worker_url)
 
-        self.streamfe = ctx.socket(zmq.PUB)
+        self.streamfe = self.ctx.socket(zmq.PUB)
         self.streamfe.connect(self.stream_url)
         self.streamfe.hwm = 100
         self.streamfe.sndhwm = 100
 
-        self.statebe = ctx.socket(zmq.PUSH)
+        self.statebe = self.ctx.socket(zmq.PUSH)
         self.statebe.connect(self.status_url)
-        self.ctx = ctx
 
         self.poller = zmq.Poller()
         self.poller.register(self.worker, zmq.POLLIN)
@@ -68,14 +72,6 @@ class DeepLearningWorker(object):
     @property
     def terminated(self):
         return self._terminated
-
-    def _toOriginal(self, boxes, r):
-        bboxes = []
-        for (left, top, right, bottom) in boxes:
-            left, top = int(left * r), int(top * r)
-            right, bottom = int(right * r), int(bottom * r)
-            bboxes.append([left, top, right, bottom])
-        return bboxes
 
     def getFrame(self, data):
         if self.mode == "realtime":
@@ -155,7 +151,7 @@ class DeepLearningWorker(object):
                     r = frame.shape[1] / float(resizedFrame.shape[1])
 
                     boxes = self.detector.getBoxes(resizedFrame)
-                    boxes = self._toOriginal(boxes, r)
+                    boxes = toOriginal(boxes, r)
                     encodings = face_encodings(frame, boxes)
                     #ids, names = self.handlerSearch.search(encodings, matches=20, confidence=0.025)
                     ids = ["Unknown"]*len(boxes)
@@ -187,10 +183,19 @@ def main():
         params = configparser.ConfigParser()
         params.read('config.ini')
         
-        worker_url = 'tcp://{}:{}'.format(params.get("backend", "host"), params.get("backend", "port"))
-        status_url = "tcp://{}:{}".format(params.get("statefe", "host"), params.get("statefe", "port"))
-        stream_url = "tcp://{}:{}".format(params.get("streaming", "host"), params.get("streaming", "port"))
-        api_url = "http://{}:{}/event".format(params.get("api", "host"), params.get("api", "port"))
+        worker_url = 'tcp://{}:{}'.format(
+            params.get("backend", "host"), 
+            params.get("backend", "port"))
+        status_url = "tcp://{}:{}".format(
+            params.get("statefe", "host"), 
+            params.get("statefe", "port"))
+        stream_url = "tcp://{}:{}".format(
+            params.get("streaming", "host"), 
+            params.get("streaming", "port"))
+        api_url = "http://{}:{}/event".format(
+            params.get("api", "host"), 
+            params.get("api", "port"))
+
         handler = SIGINT_handler()
         
         worker = DeepLearningWorker(
@@ -199,6 +204,7 @@ def main():
             status_url=status_url,
             api_url=api_url,
             handler=handler)
+
         signal.signal(signal.SIGINT, handler.signal_handler)
         signal.signal(signal.SIGHUP, handler.signal_handler)
         signal.signal(signal.SIGINT, handler.signal_handler)
@@ -208,7 +214,7 @@ def main():
         signal.signal(signal.SIGABRT, handler.signal_handler)
         signal.signal(signal.SIGBUS, handler.signal_handler)
         signal.signal(signal.SIGFPE, handler.signal_handler)
-        #signal.signal(signal.SIGKILL, receiveSignal)
+    
         signal.signal(signal.SIGUSR1, handler.signal_handler)
         signal.signal(signal.SIGSEGV, handler.signal_handler)
         signal.signal(signal.SIGUSR2, handler.signal_handler)
